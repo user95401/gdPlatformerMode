@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\Lenovo\source\gdPlatformerMode\out\CMakeFiles\e0c10d364b9b46339617757f2823e164\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{173097AB-F8F8-3DD0-9953-DE965C1D6C26}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
