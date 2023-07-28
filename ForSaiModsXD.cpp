@@ -163,7 +163,7 @@ void scaleUpdate() {
         //negative scaleX if plr is not dart
         if (!PlayerObj->m_isDart && !PlayerObj->m_isShip) PlayerObj->setScaleX(-PlayerObj->m_vehicleSize);
         //ship flipping
-        if (PlayerObj->m_isShip) {
+        if (PlayerObj->m_isShip && GameManager::sharedState()->getPlayerShip() != 170) {
             if (!PlayerObj->m_isUpsideDown) PlayerObj->setScaleY(-PlayerObj->m_vehicleSize);
             else PlayerObj->setScaleY(fabs(PlayerObj->m_vehicleSize));
         }
@@ -173,7 +173,7 @@ void scaleUpdate() {
         //restorte scaleX if plr is not dart
         if (!PlayerObj->m_isDart && !PlayerObj->m_isShip) PlayerObj->setScaleX(fabs(PlayerObj->m_vehicleSize));
         //ship flipping
-        if (PlayerObj->m_isShip) {
+        if (PlayerObj->m_isShip && GameManager::sharedState()->getPlayerShip() != 170) {
             if (!PlayerObj->m_isUpsideDown) PlayerObj->setScaleY(fabs(PlayerObj->m_vehicleSize));
             else PlayerObj->setScaleY(-PlayerObj->m_vehicleSize);
         }
@@ -298,7 +298,6 @@ void __fastcall GameManager_update_H(GameManager* self, void*, float dt) {
 inline void(__thiscall* dispatchKeyboardMSG)(cocos2d::CCKeypadDispatcher* self, int key, bool down);
 void __fastcall dispatchKeyboardMSG_H(cocos2d::CCKeypadDispatcher* self, void*, int key, bool down) {
     dispatchKeyboardMSG(self, key, down);
-
     if (key == cocos2d::KEY_A || key == cocos2d::KEY_Left) 
         AKeyPressed = ((key == cocos2d::KEY_A || key == cocos2d::KEY_Left) && !AKeyPressed);
     if (key == cocos2d::KEY_D || key == cocos2d::KEY_Right) 
@@ -315,13 +314,6 @@ DWORD WINAPI thread_func(void* hModule) {
     
     // initialize minhook
     MH_Initialize();
-
-    std::random_device os_seed;
-    const unsigned int seed = os_seed();
-    std::mt19937 generator(seed);
-    std::uniform_int_distribution<int> distribute(250, 1000);
-    int sleepMs = distribute(generator);
-    Sleep(sleepMs);
 
     HOOK(base + 0x1E8200, PlayerObject_update, false);//fk
 
@@ -341,6 +333,8 @@ DWORD WINAPI thread_func(void* hModule) {
 
     // enable all hooks you've created with minhook
     MH_EnableHook(MH_ALL_HOOKS);
+
+    //ModUtils::write_bytes(base + 0x41028c, { 0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20 });
 
     return 0;
 }
