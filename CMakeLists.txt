@@ -13,7 +13,7 @@ add_subdirectory(../curly-eureka/cocos-headers cocos-headers-build)
 add_subdirectory(../curly-eureka/minhook minhook-build)
 
 #mod
-add_library(${PROJECT_NAME} SHARED "main.cpp" "verInf.rc" ${curly_eureka_src})
+add_library(${PROJECT_NAME} SHARED "main_NEW.cpp" "verInf.rc" ${curly_eureka_src})
 target_include_directories(${PROJECT_NAME} PRIVATE ${curly_eureka_incl})
 target_link_libraries(${PROJECT_NAME} minhook cocos2d)
 #mod-universal

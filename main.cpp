@@ -309,15 +309,21 @@ bool __fastcall LevelEditorLayer_init_H(LevelEditorLayer* self, int edx, GJGameL
     return true;
 }
 
-inline void(__thiscall* LevelEditorLayer_update)(LevelEditorLayer*, float);
-void __fastcall LevelEditorLayer_update_H(LevelEditorLayer* self, float dt) {
-    LevelEditorLayer_update(self, deltaTime);
-    if (enable_platformer) {
-        platLay->setVisible(self->m_ePlaybackMode != kPlaybackModeNot);
+
+inline void(__thiscall* updateProgressbar)(PlayLayer*);//HOOK(base + 0x208020, updateProgressbar, true);
+void __fastcall updateProgressbar_H(PlayLayer* self) {
+    updateProgressbar(self);
+        updateProgressbar(self);
+        self->removeChildByTag(777);
+        self->addChild(CCLabelBMFont::create((std::string("                ") + std::to_string(deltaTime) + std::string("\n\n\n")).c_str(), "bigFont.fnt"), 500, 777);
+    /*}
+    inline void(__thiscall* PlayLayer_update)(gd::PlayLayer* self, float deltaTime);
+    void __fastcall PlayLayer_update_H(PlayLayer* self, int edx, float dt) {
+        PlayLayer_update(self, dt);*/
+    if (enable_platformer && !self->m_isDead && !self->m_bIsPaused && !self->m_hasCompletedLevel) {
         p1 = self->m_pPlayer1;
         p2 = self->m_pPlayer2;
-        deltaTime = dt;
-        speedBased = true;
+        speedBased = false;
         ruin();
     }
 }
@@ -349,6 +355,12 @@ CCLabelBMFont* CCLabelBMFont_create_H(const char* str, const char* fntFile) {
     return CCLabelBMFont_create(str, fntFile);
 }
 
+inline void(__thiscall* GameManager_update)(GameManager* self, float);
+void __fastcall GameManager_update_H(GameManager* self, void*, float dt) {
+    GameManager_update(self, dt);
+    deltaTime = dt;
+}
+
 inline void(__thiscall* dispatchKeyboardMSG)(cocos2d::CCKeypadDispatcher* self, int key, bool down);
 void __fastcall dispatchKeyboardMSG_H(cocos2d::CCKeypadDispatcher* self, void*, int key, bool down) {
     dispatchKeyboardMSG(self, key, down);
@@ -378,11 +390,14 @@ DWORD WINAPI thread_func(void* hModule) {
     HOOK(base + 0x20BF00, PlayLayer_resetLevel, true);
     //fk
     HOOK(base + 0x15ee00, LevelEditorLayer_init, true);
-    HOOK(base + 0x16a660, LevelEditorLayer_update, true);
+    HOOK(base + 0x208020, updateProgressbar, true);
+    //HOOK(base + 0x16a660, LevelEditorLayer_update, true);
     HOOK(base + 0x876e0, LevelEditorLayer_onStopPlaytest, true);
 
     HOOK(base + 0x1DE8F0, MoreOptionsLayer_init, true);
     HOOK(base + 0x1907B0, MenuLayer_init, true);
+
+    HOOK(base + 0xce440, GameManager_update, true);
 
     CC_HOOK("?dispatchKeyboardMSG@CCKeyboardDispatcher@cocos2d@@QAE_NW4enumKeyCodes@2@_N@Z", dispatchKeyboardMSG, false);
     CC_HOOK("?create@CCLabelBMFont@cocos2d@@SAPAV12@PBD0@Z", CCLabelBMFont_create, false);
