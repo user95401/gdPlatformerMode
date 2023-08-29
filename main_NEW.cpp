@@ -90,17 +90,17 @@ public:
         if (!KEY_A_IS_PRESSED && !KEY_D_IS_PRESSED && !gameLayer->m_pPlayer1->m_isDashing) {
             gameLayer->m_pPlayer1->stopRotation(false);
             if (gameLayer->m_pPlayer1->m_isShip) {
-                auto rotAction = CCRotateTo::create(0.1, lastKey1 == KEY_A ? 180 : 0);
-                rotAction->setTag(777);
-                if (!gameLayer->m_pPlayer1->getActionByTag(777)) gameLayer->m_pPlayer1->runAction(rotAction);
+                auto rotAction1 = CCRotateTo::create(0.1, lastKey1 == KEY_A ? 180 : 0);
+                rotAction1->setTag(777);
+                if (!gameLayer->m_pPlayer1->getActionByTag(777)) gameLayer->m_pPlayer1->runAction(rotAction1);
             }
         }
         if (!KEY_Left_IS_PRESSED && !KEY_Right_IS_PRESSED && !gameLayer->m_pPlayer2->m_isDashing) {
             gameLayer->m_pPlayer2->stopRotation(false);
             if (gameLayer->m_pPlayer2->m_isShip) {
-                auto rotAction = CCRotateTo::create(0.1, lastKey2 == KEY_Left ? 180 : 0);
-                rotAction->setTag(777);
-                if (!gameLayer->m_pPlayer2->getActionByTag(777)) gameLayer->m_pPlayer2->runAction(rotAction);
+                auto rotAction2 = CCRotateTo::create(0.1, lastKey2 == KEY_Left ? 180 : 0);
+                rotAction2->setTag(778);
+                if (!gameLayer->m_pPlayer2->getActionByTag(778)) gameLayer->m_pPlayer2->runAction(rotAction2);
             }
         }
         //bird
@@ -148,8 +148,19 @@ public:
             rotAction->setTag(777);
             if (!gameLayer->m_pPlayer2->getActionByTag(777)) gameLayer->m_pPlayer2->runAction(rotAction);
         }
-        //negative rot func patch
+        //negative rot
         if ((KEY_A_IS_PRESSED || KEY_Left_IS_PRESSED)) {
+            float ballrotstep = (5.f + gameLayer->m_pPlayer1->m_playerSpeed);
+            if (gameLayer->m_pPlayer1->m_isBall) {
+                auto rotAction1 = CCRotateBy::create(0.0, gameLayer->m_pPlayer1->m_isUpsideDown ? fabs(ballrotstep) : -ballrotstep);
+                rotAction1->setTag(777);
+                if (!gameLayer->m_pPlayer1->getActionByTag(777)) gameLayer->m_pPlayer1->runAction(rotAction1);
+            }
+            if (gameLayer->m_pPlayer2->m_isBall) {
+                auto rotAction2 = CCRotateBy::create(0.0, gameLayer->m_pPlayer2->m_isUpsideDown ? fabs(ballrotstep) : -ballrotstep);
+                rotAction2->setTag(778);
+                if (!gameLayer->m_pPlayer2->getActionByTag(778)) gameLayer->m_pPlayer2->runAction(rotAction2);
+            }
             //patch by sai(founded by user666) 1E9CD8: org b4 00 00 00 // patch 4c ff ff ff
             ModUtils::write_bytes(base + 0x1E9CD8, { 0x4c, 0xff, 0xff, 0xff });
         }
