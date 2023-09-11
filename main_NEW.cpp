@@ -1,14 +1,10 @@
-﻿#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <iostream>
-#include <random>
-#include <cocos2d.h>
-#include <gd.h>
-#include "mod_utils.hpp"
+﻿#include "mod_utils.hpp"
 #include "hooks.hpp"
-#include <MinHook.h>
 #include <math.h>
 using namespace std;
+using namespace gd;
+using namespace cocos2d;
+using namespace cocos2d::extension;
 
 float deltaTime;
 
@@ -30,6 +26,7 @@ public:
     inline static double moveSmoothingThing1;
     inline static double smoothingThing2;
     inline static double moveSmoothingThing2;
+    inline static double camXoffset;
     inline static void updateSpeed() {
         if (KEY_A_IS_PRESSED) {
             lastKey1 = KEY_A;
@@ -90,17 +87,27 @@ public:
         if (!KEY_A_IS_PRESSED && !KEY_D_IS_PRESSED && !gameLayer->m_pPlayer1->m_isDashing) {
             gameLayer->m_pPlayer1->stopRotation(false);
             if (gameLayer->m_pPlayer1->m_isShip) {
-                auto rotAction1 = CCRotateTo::create(0.1, lastKey1 == KEY_A ? 180 : 0);
-                rotAction1->setTag(777);
-                if (!gameLayer->m_pPlayer1->getActionByTag(777)) gameLayer->m_pPlayer1->runAction(rotAction1);
+                if (fabs(gameLayer->m_pPlayer1->m_playerSpeed) > 0.01) {
+                    auto rotAction1 = CCRotateTo::create(0.1, lastKey1 == KEY_A ? 180 : 0);
+                    rotAction1->setTag(777);
+                    if (!gameLayer->m_pPlayer1->getActionByTag(777)) gameLayer->m_pPlayer1->runAction(rotAction1);
+                }
+                else {
+                    if (!gameLayer->m_pPlayer1->getActionByTag(777)) gameLayer->m_pPlayer1->setRotation(lastKey1 == KEY_A ? 180 : 0);
+                }
             }
         }
         if (!KEY_Left_IS_PRESSED && !KEY_Right_IS_PRESSED && !gameLayer->m_pPlayer2->m_isDashing) {
             gameLayer->m_pPlayer2->stopRotation(false);
             if (gameLayer->m_pPlayer2->m_isShip) {
-                auto rotAction2 = CCRotateTo::create(0.1, lastKey2 == KEY_Left ? 180 : 0);
-                rotAction2->setTag(778);
-                if (!gameLayer->m_pPlayer2->getActionByTag(778)) gameLayer->m_pPlayer2->runAction(rotAction2);
+                if (fabs(gameLayer->m_pPlayer2->m_playerSpeed) > 0.01) {
+                    auto rotAction2 = CCRotateTo::create(0.1, lastKey2 == KEY_Left ? 180 : 0);
+                    rotAction2->setTag(778);
+                    if (!gameLayer->m_pPlayer2->getActionByTag(778)) gameLayer->m_pPlayer2->runAction(rotAction2);
+                }
+                else {
+                    gameLayer->m_pPlayer2->setRotation(lastKey2 == KEY_Left ? 180 : 0);
+                }
             }
         }
         //bird
@@ -110,12 +117,12 @@ public:
             gameLayer->m_pPlayer2->setRotation(0);
         //bot and spider in 3d 4k october
         if (gameLayer->m_pPlayer1->m_isRobot || gameLayer->m_pPlayer1->m_isSpider && gameLayer->m_pPlayer1->m_isOnGround) {
-            auto rotAction = CCRotateTo::create(0.1, 0);
+            auto rotAction = CCRotateTo::create(0.05, 0);
             rotAction->setTag(777);
             if (!gameLayer->m_pPlayer1->getActionByTag(777)) gameLayer->m_pPlayer1->runAction(rotAction);
         }
         if (gameLayer->m_pPlayer2->m_isRobot || gameLayer->m_pPlayer2->m_isSpider && gameLayer->m_pPlayer2->m_isOnGround) {
-            auto rotAction = CCRotateTo::create(0.1, 0);
+            auto rotAction = CCRotateTo::create(0.05, 0);
             rotAction->setTag(777);
             if (!gameLayer->m_pPlayer2->getActionByTag(777)) gameLayer->m_pPlayer2->runAction(rotAction);
         }
@@ -130,7 +137,7 @@ public:
             else if (rot < 420) torot = 360;
             else torot = 0;
             if (gameLayer->m_pPlayer1->getRotation() < 0) torot = -torot;
-            auto rotAction = CCRotateTo::create(0.1, torot);
+            auto rotAction = CCRotateTo::create(0.05, torot);
             rotAction->setTag(777);
             if(!gameLayer->m_pPlayer1->getActionByTag(777)) gameLayer->m_pPlayer1->runAction(rotAction);
         }
@@ -144,27 +151,10 @@ public:
             else if (rot < 420) torot = 360;
             else torot = 0;
             if (gameLayer->m_pPlayer2->getRotation() < 0) torot = -torot;
-            auto rotAction = CCRotateTo::create(0.1, torot);
+            auto rotAction = CCRotateTo::create(0.05, torot);
             rotAction->setTag(777);
             if (!gameLayer->m_pPlayer2->getActionByTag(777)) gameLayer->m_pPlayer2->runAction(rotAction);
         }
-        //negative rot
-        if ((KEY_A_IS_PRESSED || KEY_Left_IS_PRESSED)) {
-            float ballrotstep = (5.f + gameLayer->m_pPlayer1->m_playerSpeed);
-            if (gameLayer->m_pPlayer1->m_isBall) {
-                auto rotAction1 = CCRotateBy::create(0.0, gameLayer->m_pPlayer1->m_isUpsideDown ? fabs(ballrotstep) : -ballrotstep);
-                rotAction1->setTag(777);
-                if (!gameLayer->m_pPlayer1->getActionByTag(777)) gameLayer->m_pPlayer1->runAction(rotAction1);
-            }
-            if (gameLayer->m_pPlayer2->m_isBall) {
-                auto rotAction2 = CCRotateBy::create(0.0, gameLayer->m_pPlayer2->m_isUpsideDown ? fabs(ballrotstep) : -ballrotstep);
-                rotAction2->setTag(778);
-                if (!gameLayer->m_pPlayer2->getActionByTag(778)) gameLayer->m_pPlayer2->runAction(rotAction2);
-            }
-            //patch by sai(founded by user666) 1E9CD8: org b4 00 00 00 // patch 4c ff ff ff
-            ModUtils::write_bytes(base + 0x1E9CD8, { 0x4c, 0xff, 0xff, 0xff });
-        }
-        else ModUtils::write_bytes(base + 0x1E9CD8, { 0xb4, 0x00, 0x00, 0x00 });
 
     }
     inline static void particlesUpdate() {
@@ -212,44 +202,70 @@ public:
     inline static std::string lastAnim2;
     inline static void runAnim1(std::string name) {
         lastAnim1 = name;
-        gameLayer->m_pPlayer1->RobotSprite->runAnimation(name);
-        if (name == "idle01" || name == "idle02") gameLayer->m_pPlayer1->SpiderSprite->runAnimation(name);
-        else if (name == "run") gameLayer->m_pPlayer1->playDynamicSpiderRun();
+        //RobotSprite
+        gameLayer->m_pPlayer1->RobotSprite->runAnimation(lastAnim1);
+        //SpiderSprite
+        if (lastAnim1 == "idle01") gameLayer->m_pPlayer1->SpiderSprite->runAnimation(lastAnim1);
+        if (lastAnim1 == "run") gameLayer->m_pPlayer1->playDynamicSpiderRun();
     }
     inline static void runAnim2(std::string name) {
         lastAnim2 = name;
-        gameLayer->m_pPlayer2->RobotSprite->runAnimation(name);
-        if (name == "idle01" || name == "idle02") gameLayer->m_pPlayer2->SpiderSprite->runAnimation(name);
-        else if (name == "run") gameLayer->m_pPlayer2->playDynamicSpiderRun();
+        //RobotSprite
+        gameLayer->m_pPlayer2->RobotSprite->runAnimation(lastAnim2);
+        //SpiderSprite
+        if (lastAnim2 == "idle01") gameLayer->m_pPlayer2->SpiderSprite->runAnimation(lastAnim2);
+        if (lastAnim2 == "run") gameLayer->m_pPlayer2->playDynamicSpiderRun();
     }
     inline static void animationsUpdate() {
-        if (!KEY_A_IS_PRESSED && !KEY_D_IS_PRESSED) runAnim1("idle01");
+        if (!KEY_A_IS_PRESSED && !KEY_D_IS_PRESSED && gameLayer->m_pPlayer1->m_isOnGround) runAnim1("idle01");
         else if (lastAnim1 != "run") runAnim1("run");
-        if (!KEY_Left_IS_PRESSED && !KEY_Right_IS_PRESSED) runAnim2("idle01");
+        if (!KEY_Left_IS_PRESSED && !KEY_Right_IS_PRESSED && gameLayer->m_pPlayer2->m_isOnGround) runAnim2("idle01");
         else if (lastAnim2 != "run") runAnim2("run");
+    }
+    inline static void camXoffsetUpdate() {
+        if (KEY_A_IS_PRESSED) {
+            camXoffset = camXoffset - ((deltaTime * 10) + fabs(gameLayer->m_pPlayer1->m_playerSpeed * 10)) + smoothingThing1;
+            if (camXoffset < -180.0) camXoffset = -180.0;
+        }
+        else if (KEY_D_IS_PRESSED) {
+            camXoffset = camXoffset + ((deltaTime * 10) + fabs(gameLayer->m_pPlayer1->m_playerSpeed * 10)) + smoothingThing1;
+            if (camXoffset > 0.0) camXoffset = 0.0;
+        }
     }
     inline static void ruin(GJBaseGameLayer* gameLayerArg) {
         gameLayer = gameLayerArg;
         if (gameLayer->m_pPlayer1->m_playerSpeed > 0.69) oldSpeed1 = gameLayer->m_pPlayer1->m_playerSpeed;
         if (gameLayer->m_pPlayer2->m_playerSpeed > 0.69) oldSpeed2 = gameLayer->m_pPlayer2->m_playerSpeed;
 
-
         //patch crash on dashing backwards (by cos8o): 0xE9, 0xA7, 0x00 0x1EEB92 // org is 0x0f, 0x84, 0xa6
         if (enableMe) ModUtils::write_bytes(base + 0x1EEB92, { 0xE9, 0xA7, 0x00 });
         else ModUtils::write_bytes(base + 0x1EEB92, { 0x0f, 0x84, 0xa6 });
+
         //conditions
         if (!enableMe) return;
+
+        updateRotation();
+        particlesUpdate();
+        scaleUpdate();
+        animationsUpdate();
+        camXoffsetUpdate();
+
+        //playlayer
+        if (gameLayer->m_pPlayer1->m_isInPlayLayer) {
+            PlayLayer* playLayer = reinterpret_cast<PlayLayer*>(gameLayerArg);
+            if (!playLayer->m_isDead && !playLayer->m_hasCompletedLevel) {
+                playLayer->m_cameraXLocked = true;
+                playLayer->m_cameraX = (playLayer->m_pPlayer1->m_position.x - 180.0) + camXoffset;
+            }
+        }
+
         if (gameLayer->m_pPlayer1->m_isDashing || gameLayer->m_pPlayer2->m_isDashing) {
             gameLayer->m_pPlayer1->m_playerSpeed = oldSpeed1;
             gameLayer->m_pPlayer2->m_playerSpeed = oldSpeed2;
             return;
         }
-        
+
         updateSpeed();
-        updateRotation();
-        particlesUpdate();
-        scaleUpdate();
-        animationsUpdate();
     }
 };
 
@@ -257,13 +273,12 @@ inline void(__thiscall* updateVisibility)(PlayLayer*);
 void __fastcall updateVisibility_H(PlayLayer* self) {
     updateVisibility(self); //self->m_pPlayer1->runBallRotation
     PlatformerMod::enableMe = self->m_level->m_twoPlayerMode;
-    PlatformerMod::ruin(self);
-
+    PlatformerMod::ruin(self);//sometimes return;
 }
 inline bool(__thiscall* PlayLayer_init)(PlayLayer*, GJGameLevel*);
 bool __fastcall PlayLayer_init_H(PlayLayer* self, void*, GJGameLevel* level) {
     if (!PlayLayer_init(self, level)) return false;
-    PlatformerMod::enableMe = level->m_twoPlayerMode;
+    PlatformerMod::enableMe = level->m_twoPlayerMode; 
     if(PlatformerMod::enableMe){
         self->toggleDualMode(GameObject::createWithKey(12), bool(!self->m_bIsDualMode), self->m_pPlayer1, true);
         self->toggleDualMode(GameObject::createWithKey(12), bool(!self->m_bIsDualMode), self->m_pPlayer1, true);
@@ -277,6 +292,7 @@ bool __fastcall LevelEditorLayer_init_H(LevelEditorLayer* self, int, GJGameLevel
     PlatformerMod::enableMe = level->m_twoPlayerMode;
     return true;
 }
+
 inline void(__thiscall* LevelEditorLayer_update)(LevelEditorLayer*, float);
 void __fastcall LevelEditorLayer_update_H(LevelEditorLayer* self, void*, float dt) {
     LevelEditorLayer_update(self, dt);
@@ -299,6 +315,20 @@ void __fastcall dispatchKeyboardMSG_H(cocos2d::CCKeypadDispatcher* self, void*, 
     if (key == KEY_Right) KEY_Right_IS_PRESSED = (key == KEY_Right && !KEY_Right_IS_PRESSED);
 
     if (key == KEY_F3) KEY_F3_IS_PRESSED = (key == KEY_F3 && !KEY_F3_IS_PRESSED);
+
+    if (PlatformerMod::enableMe) {
+        //negative rot
+        if ((KEY_A_IS_PRESSED || KEY_Left_IS_PRESSED)) {
+            //patch by sai(founded by user666) 1E9CD8: org b4 00 00 00 // patch 4c ff ff ff
+            ModUtils::write_bytes(base + 0x1E9CD8, { 0x4c, 0xff, 0xff, 0xff });//normal rot
+            //user666's patch: game + 1E9DED - C1 E0 06 // org: game + 1E9DED - C1 E0 06
+            ModUtils::write_bytes(base + 0x1E9DED, { 0xC1, 0xE0, 0x06 });//ball rot
+        }
+        if ((KEY_D_IS_PRESSED || KEY_Right_IS_PRESSED)) {
+            ModUtils::write_bytes(base + 0x1E9CD8, { 0xb4, 0x00, 0x00, 0x00 });//normal rot
+            ModUtils::write_bytes(base + 0x1E9DED, { 0xC1, 0xE0, 0x03 });//ball rot
+        }
+    }
 }
 inline CCLabelBMFont* (__cdecl* CCLabelBMFont_create)(const char*, const char*);
 CCLabelBMFont* CCLabelBMFont_create_H(const char* str, const char* fntFile) {
@@ -309,16 +339,16 @@ CCLabelBMFont* CCLabelBMFont_create_H(const char* str, const char* fntFile) {
 DWORD WINAPI thread_func(void* hModule) {
     
     // initialize minhook
-    MH_Initialize();
+    MH_SafeInitialize();
 
-    HOOK(base + 0x205460, updateVisibility, false);
-    HOOK(base + 0x1FB780, PlayLayer_init, false);
-    HOOK(base + 0x15ee00, LevelEditorLayer_init, true);
-    HOOK(base + 0x16a660, LevelEditorLayer_update, true);
+    HOOK(base + 0x205460, updateVisibility);
+    HOOK(base + 0x1FB780, PlayLayer_init);
+    HOOK(base + 0x15ee00, LevelEditorLayer_init);
+    HOOK(base + 0x16a660, LevelEditorLayer_update);
 
-    HOOK(base + 0xce440, GameManager_update, false);
-    CC_HOOK("?dispatchKeyboardMSG@CCKeyboardDispatcher@cocos2d@@QAE_NW4enumKeyCodes@2@_N@Z", dispatchKeyboardMSG, false);
-    CC_HOOK("?create@CCLabelBMFont@cocos2d@@SAPAV12@PBD0@Z", CCLabelBMFont_create, false);
+    HOOK(base + 0xce440, GameManager_update);
+    CC_HOOK("?dispatchKeyboardMSG@CCKeyboardDispatcher@cocos2d@@QAE_NW4enumKeyCodes@2@_N@Z", dispatchKeyboardMSG);
+    CC_HOOK("?create@CCLabelBMFont@cocos2d@@SAPAV12@PBD0@Z", CCLabelBMFont_create);
 
     // enable all hooks you've created with minhook
     MH_EnableHook(MH_ALL_HOOKS);

@@ -17,8 +17,8 @@ add_library(${PROJECT_NAME} SHARED "main_NEW.cpp" "verInf.rc" ${curly_eureka_src
 target_include_directories(${PROJECT_NAME} PRIVATE ${curly_eureka_incl})
 target_link_libraries(${PROJECT_NAME} minhook cocos2d)
 #mod-universal
-add_library(${PROJECT_NAME}-universal SHARED "ForSaiModsXD.cpp" "verInf-universal.rc" ${curly_eureka_src})
-target_include_directories(${PROJECT_NAME}-universal PRIVATE ${curly_eureka_incl})
-target_link_libraries(${PROJECT_NAME}-universal minhook cocos2d)
+#add_library(${PROJECT_NAME}-universal SHARED "(old)ForSaiModsXD.cpp" "verInf-universal.rc" ${curly_eureka_src})
+#target_include_directories(${PROJECT_NAME}-universal PRIVATE ${curly_eureka_incl})
+#target_link_libraries(${PROJECT_NAME}-universal minhook cocos2d)
 
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/)
